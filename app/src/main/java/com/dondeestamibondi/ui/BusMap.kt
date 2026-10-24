@@ -1,14 +1,18 @@
 package com.dondeestamibondi.ui
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -29,6 +33,8 @@ import org.osmdroid.views.overlay.CopyrightOverlay
 import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 
 /** AMBA-ish default camera (Obelisco). */
 private val DEFAULT_CENTER = GeoPoint(-34.6037, -58.3816)
@@ -93,12 +99,17 @@ fun BusMap(
     modifier: Modifier = Modifier,
     trail: List<GeoPoint> = emptyList(),
     onBusClick: (BusPosition) -> Unit = {},
+    showMyLocation: Boolean = false,
+    centerOnMeRequest: Int = 0,
+    onNoFix: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val onStopClickState = rememberUpdatedState(onStopClick)
     val stopsState = rememberUpdatedState(stops)
     val onBusClickState = rememberUpdatedState(onBusClick)
+    val showMyLocationState = rememberUpdatedState(showMyLocation)
+    val onNoFixState = rememberUpdatedState(onNoFix)
     val dark = isSystemInDarkTheme()
 
     val mapView = remember {
@@ -115,6 +126,18 @@ fun BusMap(
     val copyright = remember { CopyrightOverlay(context) }
     val tileFilter = remember(dark) { basemapFilter(dark) }
     val busIcons = remember { BusMarkerFactory(context) }
+
+    // The user's own position: a plain blue dot (no direction arrow), drawn on top of
+    // everything else (buses, routes, stops) by being added last to map.overlays.
+    val myLocationOverlay = remember {
+        MyLocationNewOverlay(GpsMyLocationProvider(context), mapView).apply {
+            setPersonIcon(myLocationDotBitmap(context))
+            setPersonAnchor(0.5f, 0.5f)
+            setDirectionIcon(myLocationDotBitmap(context))
+            setDirectionAnchor(0.5f, 0.5f)
+            setDrawAccuracyEnabled(true)
+        }
+    }
 
     // Taps that no marker consumed: open the nearest stop within a finger's reach.
     // Stop dots are only 8 dp, so requiring an exact hit made them hard to open.
@@ -196,15 +219,52 @@ fun BusMap(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_RESUME -> {
+                    mapView.onResume()
+                    if (showMyLocationState.value) runCatching { myLocationOverlay.enableMyLocation() }
+                }
+                Lifecycle.Event.ON_PAUSE -> {
+                    mapView.onPause()
+                    myLocationOverlay.disableMyLocation()
+                }
                 else -> {}
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            myLocationOverlay.disableMyLocation()
             mapView.onDetach()
+        }
+    }
+
+    // Turning the permission on/off (or the caller's showMyLocation flag) while the
+    // map is already on screen should start/stop the GPS fix without a resume cycle.
+    LaunchedEffect(showMyLocation) {
+        if (showMyLocation) {
+            runCatching { myLocationOverlay.enableMyLocation() }
+        } else {
+            myLocationOverlay.disableMyLocation()
+        }
+    }
+
+    // Each tap on the "center on me" button bumps centerOnMeRequest; animate to the
+    // last known fix, or wait for the first one if there isn't one yet.
+    LaunchedEffect(centerOnMeRequest) {
+        if (centerOnMeRequest == 0 || !showMyLocation) return@LaunchedEffect
+        val loc = myLocationOverlay.myLocation
+        if (loc != null) {
+            mapView.controller.setZoom(16.0)
+            mapView.controller.animateTo(loc)
+        } else {
+            onNoFixState.value()
+            myLocationOverlay.runOnFirstFix {
+                mapView.post {
+                    val fix = myLocationOverlay.myLocation ?: return@post
+                    mapView.controller.setZoom(16.0)
+                    mapView.controller.animateTo(fix)
+                }
+            }
         }
     }
 
@@ -245,6 +305,8 @@ fun BusMap(
                 map.overlays.add(marker)
             }
             map.overlays.add(copyright)
+            // Added last so the user's own position draws above routes, stops and buses.
+            if (showMyLocation) map.overlays.add(myLocationOverlay)
 
             // Zoom to a freshly loaded trail once; don't fight the user afterwards.
             if (trail.size >= 2 && lastTrail[0] !== trail) {
@@ -301,6 +363,23 @@ private fun nearestStop(map: MapView, tap: GeoPoint, stops: List<Parada>, maxPx:
 
 private fun withAlpha(color: Int, alpha: Int): Int =
     Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color))
+
+/** The classic "blue dot": solid blue circle with a white ring, legible on both basemaps. */
+private fun myLocationDotBitmap(context: Context): Bitmap {
+    val density = context.resources.displayMetrics.density
+    val size = (18 * density).toInt()
+    val stroke = 3f * density
+    val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val c = Canvas(bmp)
+    val center = size / 2f
+    val outerRadius = center - stroke / 2f
+    val p = Paint(Paint.ANTI_ALIAS_FLAG)
+    p.color = Color.WHITE
+    c.drawCircle(center, center, outerRadius + stroke / 2f, p)
+    p.color = Color.parseColor("#1A73E8")
+    c.drawCircle(center, center, outerRadius, p)
+    return bmp
+}
 
 private fun stopMarkerDrawable(context: Context, dark: Boolean): Drawable {
     val density = context.resources.displayMetrics.density

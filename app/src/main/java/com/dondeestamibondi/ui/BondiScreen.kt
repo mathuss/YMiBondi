@@ -1,6 +1,11 @@
 package com.dondeestamibondi.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.size
@@ -30,11 +35,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.dondeestamibondi.data.BusPosition
 import com.dondeestamibondi.data.Geo
 import com.dondeestamibondi.data.Parada
@@ -70,6 +78,10 @@ import kotlin.math.roundToInt
 
 private const val POLL_MS = 10_000L
 
+private fun hasLocationPermission(context: android.content.Context): Boolean =
+    ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
 // One color per recorrido. Saturated hues that read on both the dark and the light
 // grayscale basemaps (the basemap itself has no color).
 private val RECORRIDO_PALETTE = listOf(
@@ -80,6 +92,27 @@ private val RECORRIDO_PALETTE = listOf(
 @Composable
 fun BondiScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    var hasLocationPermission by remember { mutableStateOf(hasLocationPermission(context)) }
+    var centerOnMeRequest by remember { mutableStateOf(0) }
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { granted ->
+        hasLocationPermission = granted.values.any { it }
+        if (hasLocationPermission) {
+            centerOnMeRequest++
+        } else {
+            Toast.makeText(context, "Activá el permiso de ubicación para verte en el mapa", Toast.LENGTH_SHORT).show()
+        }
+    }
+    fun onMyLocationClick() {
+        if (hasLocationPermission) {
+            centerOnMeRequest++
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+            )
+        }
+    }
     var query by rememberSaveable { mutableStateOf("") }
     var line by rememberSaveable { mutableStateOf("") }
     var positions by remember { mutableStateOf<List<BusPosition>>(emptyList()) }
@@ -333,9 +366,18 @@ fun BondiScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier.fillMaxSize(),
                     trail = trail,
                     onBusClick = { selectedBusId = it.id },
+                    showMyLocation = hasLocationPermission,
+                    centerOnMeRequest = centerOnMeRequest,
+                    onNoFix = { Toast.makeText(context, "Buscando tu ubicación…", Toast.LENGTH_SHORT).show() },
                 )
                 if (loading && positions.isEmpty()) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
+                }
+                FloatingActionButton(
+                    onClick = { onMyLocationClick() },
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
+                ) {
+                    Icon(Icons.Filled.MyLocation, contentDescription = "Ir a mi ubicación")
                 }
             }
         }
