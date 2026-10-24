@@ -252,10 +252,11 @@ fun BondiScreen(modifier: Modifier = Modifier) {
     }
 
     val directions = remember(positions) { directionSummaries(positions) }
-    val visibleBuses = remember(positions, sentidoFilter, colorsReady, line) {
-        positions
-            .filter { sentidoFilter == null || it.sentido == sentidoFilter }
-            .map { BusPin(it, LineColors.forLine(it.linea.ifBlank { line }, it.color)) }
+    val visibleBuses = remember(positions, sentidoFilter, colorsReady, line, selectedRoute, routes) {
+        val bySentido = positions.filter { sentidoFilter == null || it.sentido == sentidoFilter }
+        val route = routes.firstOrNull { it.key == selectedRoute }
+        val filtered = if (route == null) bySentido else busesOnRoute(bySentido, route)
+        filtered.map { BusPin(it, LineColors.forLine(it.linea.ifBlank { line }, it.color)) }
     }
     val visibleRoutes = remember(routes, selectedRoute) {
         if (selectedRoute == null) routes else routes.filter { it.key == selectedRoute }
@@ -340,7 +341,8 @@ fun BondiScreen(modifier: Modifier = Modifier) {
             count = visibleBuses.size,
             loading = loading,
             error = error,
-            filtered = sentidoFilter != null,
+            sentidoFiltered = sentidoFilter != null,
+            routeFiltered = selectedRoute != null,
         )
 
         trailBus?.let { tb ->
@@ -451,8 +453,37 @@ private fun buildRouteLayers(line: String, resp: RutasResponse, lineColorHex: St
             paths = r.segmentos
                 .map { seg -> seg.puntos.mapNotNull { p -> if (p.size >= 2) GeoPoint(p[0], p[1]) else null } }
                 .filter { it.size >= 2 },
+            shortName = r.routeShortName,
         )
     }.filter { it.paths.isNotEmpty() }
+}
+
+/**
+ * Live units running [route]: first try to match by branch code (works when the OSM
+ * `routeShortName` happens to agree with the GTFS ramal, e.g. both "60B"); if nothing
+ * matches that way — the usual case, see the README note on recorridos vs ramales —
+ * fall back to units whose current position is close to the route's own geometry.
+ */
+private fun busesOnRoute(buses: List<BusPosition>, route: RouteLayer): List<BusPosition> {
+    val shortName = route.shortName.trim()
+    val byName = if (shortName.isBlank()) emptyList() else buses.filter { bus ->
+        val ramalCode = bus.ramalNombre.substringBefore(" - ").trim()
+        ramalCode.equals(shortName, ignoreCase = true) ||
+            BusMarkerFactory.branchCode(bus).let { it.isNotEmpty() && shortName.endsWith(it, ignoreCase = true) }
+    }
+    if (byName.isNotEmpty()) return byName
+
+    val maxDistanceMeters = 150.0
+    return buses.filter { bus ->
+        if (bus.latitude == 0.0 && bus.longitude == 0.0) return@filter false
+        route.paths.any { path ->
+            (0 until path.size - 1).any { i ->
+                val a = path[i]
+                val b = path[i + 1]
+                Geo.distanceToSegmentMeters(bus.latitude, bus.longitude, a.latitude, a.longitude, b.latitude, b.longitude) <= maxDistanceMeters
+            }
+        }
+    }
 }
 
 private fun describeRoute(r: RutaRamal): String {
@@ -570,8 +601,18 @@ private fun etaLabel(distMeters: Double, bus: BusPosition): String {
 }
 
 @Composable
-private fun StatusLine(line: String, count: Int, loading: Boolean, error: String?, filtered: Boolean) {
-    val suffix = if (filtered) " en este sentido" else ""
+private fun StatusLine(
+    line: String,
+    count: Int,
+    loading: Boolean,
+    error: String?,
+    sentidoFiltered: Boolean,
+    routeFiltered: Boolean,
+) {
+    val suffix = buildString {
+        if (sentidoFiltered) append(" en este sentido")
+        if (routeFiltered) append(if (sentidoFiltered) " y recorrido" else " en este recorrido")
+    }
     val text = when {
         line.isBlank() -> "Buscá una línea para ver los colectivos en vivo"
         error != null -> "⚠ $error"

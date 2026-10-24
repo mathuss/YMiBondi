@@ -84,6 +84,8 @@ data class RouteLayer(
     val description: String,
     val color: Int,
     val paths: List<List<GeoPoint>>,
+    /** OSM `routeShortName` (e.g. "60B"), used to try matching live units by branch code. */
+    val shortName: String = "",
 )
 
 /** A live bus plus the real color of its line, resolved by the caller. */
