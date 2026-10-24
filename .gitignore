@@ -1,0 +1,21 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build
+/app/build
+/captures
+.externalNativeBuild
+.cxx
+.kotlin/
+.codegraph/
+*.apk
+*.keystore
+*.jks
+# Reverse-engineering input / scratch (kept out of the repo)
+Transporte ya.apk
+
+# Release signing: keystore + passwords stay local, never in git
+/signing/
+/dist/
