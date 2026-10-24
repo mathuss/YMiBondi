@@ -14,20 +14,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,30 +44,38 @@ import com.dondeestamibondi.data.Repo
 import com.dondeestamibondi.data.TrenEstacion
 import com.dondeestamibondi.data.TrenHorario
 import com.dondeestamibondi.data.TrenResult
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private const val ARRIVALS_POLL_MS = 20_000L
+private const val ARRIVALS_POLL_MS = 10_000L
 
 @Composable
 fun TrenScreen(modifier: Modifier = Modifier) {
     var stations by remember { mutableStateOf<List<TrenEstacion>>(emptyList()) }
     var loadingStations by remember { mutableStateOf(true) }
+    var refreshingStations by remember { mutableStateOf(false) }
     var stationsError by remember { mutableStateOf<String?>(null) }
     var selected by remember { mutableStateOf<TrenEstacion?>(null) }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    suspend fun loadStations() {
         try {
             stations = Repo.estacionesRetiroTigre()
             stationsError = null
         } catch (e: Exception) {
             stationsError = e.message ?: "Error de conexión"
-        } finally {
-            loadingStations = false
         }
+    }
+
+    LaunchedEffect(Unit) {
+        loadStations()
+        loadingStations = false
     }
 
     // Arrivals -> station list, instead of leaving the app.
@@ -73,8 +87,16 @@ fun TrenScreen(modifier: Modifier = Modifier) {
             modifier = modifier,
             stations = stations,
             loading = loadingStations,
+            refreshing = refreshingStations,
             error = stationsError,
             onPick = { selected = it },
+            onRefresh = {
+                scope.launch {
+                    refreshingStations = true
+                    loadStations()
+                    refreshingStations = false
+                }
+            },
         )
     } else {
         ArrivalsView(
@@ -86,40 +108,51 @@ fun TrenScreen(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun StationList(
     modifier: Modifier,
     stations: List<TrenEstacion>,
     loading: Boolean,
+    refreshing: Boolean,
     error: String?,
     onPick: (TrenEstacion) -> Unit,
+    onRefresh: () -> Unit,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Header(title = "Mitre · Retiro – Tigre", subtitle = "Elegí una estación")
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-        when {
-            loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
-            error != null -> Box(Modifier.fillMaxSize().padding(24.dp), Alignment.Center) {
-                Text("⚠ $error", color = MaterialTheme.colorScheme.error)
-            }
-            else -> LazyColumn(Modifier.fillMaxSize()) {
-                items(stations) { st ->
-                    Column(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { onPick(st) }
-                            .padding(horizontal = 20.dp, vertical = 16.dp)
-                    ) {
-                        Text(st.nombre, style = MaterialTheme.typography.titleMedium)
+        PullToRefreshBox(
+            isRefreshing = refreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+        ) {
+            when {
+                loading -> Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+                error != null -> Box(
+                    Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+                    Alignment.Center,
+                ) {
+                    Text("⚠ $error", color = MaterialTheme.colorScheme.error)
+                }
+                else -> LazyColumn(Modifier.fillMaxSize()) {
+                    items(stations) { st ->
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onPick(st) }
+                                .padding(horizontal = 20.dp, vertical = 16.dp)
+                        ) {
+                            Text(st.nombre, style = MaterialTheme.typography.titleMedium)
+                        }
+                        HorizontalDivider()
                     }
-                    HorizontalDivider()
                 }
             }
-        }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ArrivalsView(
     modifier: Modifier,
@@ -131,12 +164,22 @@ private fun ArrivalsView(
     var selectedTrain by remember { mutableStateOf<String?>(null) }
     var lastSeen by remember { mutableStateOf<TrenResult?>(null) }
     var loading by remember { mutableStateOf(true) }
+    var isRefreshing by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var fetchedAt by remember { mutableStateOf(0L) }
     // true = towards Tigre, false = towards Retiro
     var toTigre by remember { mutableStateOf(true) }
 
     // Train detail -> arrivals list, instead of leaving the app.
     BackHandler(enabled = selectedTrain != null) { selectedTrain = null }
+
+    // A manual refresh (pull-to-refresh) fetches immediately and restarts the poll timer,
+    // instead of waiting for the next tick.
+    val refreshSignal = remember(station.idEstacion) { Channel<Unit>(Channel.CONFLATED) }
+    fun requestRefresh() {
+        isRefreshing = true
+        refreshSignal.trySend(Unit)
+    }
 
     LaunchedEffect(station.idEstacion) {
         var firstLoad = true
@@ -144,6 +187,7 @@ private fun ArrivalsView(
             try {
                 results = Repo.arribos(station.idEstacion).results
                 error = null
+                fetchedAt = System.currentTimeMillis()
                 // At a terminal one direction is always empty (e.g. "A Tigre" at Tigre):
                 // on first load, open the direction that actually has trains.
                 if (firstLoad && results.isNotEmpty()) {
@@ -157,10 +201,21 @@ private fun ArrivalsView(
                 error = e.message ?: "Error de conexión"
             } finally {
                 loading = false
+                isRefreshing = false
             }
-            delay(ARRIVALS_POLL_MS)
+            withTimeoutOrNull(ARRIVALS_POLL_MS) { refreshSignal.receive() }
         }
     }
+
+    // Ticks once a second so arrival countdowns move live between polls instead of
+    // jumping only every ARRIVALS_POLL_MS.
+    val nowMs by produceState(System.currentTimeMillis()) {
+        while (isActive) {
+            value = System.currentTimeMillis()
+            delay(1000)
+        }
+    }
+    val elapsedS = if (fetchedAt == 0L) 0L else ((nowMs - fetchedAt) / 1000).coerceAtLeast(0)
 
     // Detail of one train: straight-line diagram with its live position.
     selectedTrain?.let { key ->
@@ -172,6 +227,9 @@ private fun ArrivalsView(
                 modifier = modifier,
                 result = shown,
                 stale = live == null,
+                elapsedS = elapsedS,
+                isRefreshing = isRefreshing,
+                onRefresh = { requestRefresh() },
                 stations = stations,
                 station = station,
                 onBack = { selectedTrain = null },
@@ -202,9 +260,16 @@ private fun ArrivalsView(
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             FilterChip(selected = toTigre, onClick = { toTigre = true }, label = { Text("A Tigre") })
             FilterChip(selected = !toTigre, onClick = { toTigre = false }, label = { Text("A Retiro") })
+            Spacer(Modifier.weight(1f))
+            Text(
+                freshnessLabel(fetchedAt, elapsedS),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         val filtered = remember(results, toTigre) {
@@ -213,22 +278,28 @@ private fun ArrivalsView(
                 .sortedBy { it.arribo?.segundos ?: Long.MAX_VALUE }
         }
 
-        Box(Modifier.weight(1f).fillMaxWidth()) {
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { requestRefresh() },
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+        ) {
             when {
                 loading && results.isEmpty() ->
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 error != null && results.isEmpty() ->
                     Text("⚠ $error", color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center).padding(24.dp))
+                        modifier = Modifier.align(Alignment.Center).padding(24.dp)
+                            .verticalScroll(rememberScrollState()))
                 filtered.isEmpty() ->
                     Text(
                         "Sin próximos trenes ${if (toTigre) "a Tigre" else "a Retiro"} ahora",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.Center).padding(24.dp),
+                        modifier = Modifier.align(Alignment.Center).padding(24.dp)
+                            .verticalScroll(rememberScrollState()),
                     )
                 else -> LazyColumn(Modifier.fillMaxSize()) {
                     items(filtered) { r ->
-                        ArrivalRow(r, onClick = {
+                        ArrivalRow(r, elapsedS = elapsedS, onClick = {
                             lastSeen = r
                             selectedTrain = trainKey(r)
                         })
@@ -238,6 +309,10 @@ private fun ArrivalsView(
         }
     }
 }
+
+/** "Actualizado hace Xs" / "Actualizando…" for the small freshness label next to the filters. */
+private fun freshnessLabel(fetchedAt: Long, elapsedS: Long): String =
+    if (fetchedAt == 0L) "Actualizando…" else "Actualizado hace ${elapsedS}s"
 
 /**
  * Where THIS train is going. `servicio.ramal.cabeceraFinal` is the branch's fixed end
@@ -277,6 +352,10 @@ private fun isLive(r: TrenResult): Boolean {
 private fun atPlatform(r: TrenResult): Boolean =
     r.arribo?.salida?.enAnden != null || r.arribo?.llegada?.enAnden != null
 
+/** Counts [segundos] down live between polls, by subtracting the time since the last fetch. */
+private fun effectiveSegundos(segundos: Long?, elapsedS: Long): Long? =
+    segundos?.let { (it - elapsedS).coerceAtLeast(0) }
+
 /** Minutes late (positive) or early (negative) vs the timetable, when tracked. */
 private fun delayMinutes(h: TrenHorario?): Long? {
     val prog = h?.programada ?: return null
@@ -287,8 +366,8 @@ private fun delayMinutes(h: TrenHorario?): Long? {
 }
 
 @Composable
-private fun ArrivalRow(r: TrenResult, onClick: () -> Unit) {
-    val segundos = r.arribo?.segundos
+private fun ArrivalRow(r: TrenResult, elapsedS: Long, onClick: () -> Unit) {
+    val segundos = effectiveSegundos(r.arribo?.segundos, elapsedS)
     val live = isLive(r)
     val here = timeHere(r)
     val delay = delayMinutes(here)
@@ -371,11 +450,15 @@ private fun formatTime(iso: String): String? =
 private fun trainKey(r: TrenResult): String =
     r.servicio?.id ?: "${r.servicio?.numero}-${r.servicio?.sentido}"
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TrainDetailView(
     modifier: Modifier,
     result: TrenResult,
     stale: Boolean,
+    elapsedS: Long,
+    isRefreshing: Boolean,
+    onRefresh: () -> Unit,
     stations: List<TrenEstacion>,
     station: TrenEstacion,
     onBack: () -> Unit,
@@ -384,6 +467,7 @@ private fun TrainDetailView(
     val line = remember(result, stations) { computeTrainOnLine(result, stations, towardsTigre) }
     val s = result.servicio
     val equipo = s?.equipo?.nombre?.takeIf { it.isNotBlank() }
+    val segundos = effectiveSegundos(result.arribo?.segundos, elapsedS)
 
     Column(modifier = modifier.fillMaxSize()) {
         Row(
@@ -406,57 +490,66 @@ private fun TrainDetailView(
             }
         }
 
-        Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
-            val where = when {
-                line == null -> "Sin datos del recorrido de este tren"
-                !line.started -> "Todavía no salió de ${line.nextName}"
-                line.atStation && line.nextName == null -> "Llegó a ${line.prevName}"
-                line.atStation -> "Detenido en ${line.prevName}"
-                else -> "Entre ${line.prevName} y ${line.nextName}"
-            }
-            Text(where, style = MaterialTheme.typography.titleMedium)
-            if (stale) {
-                Text(
-                    "Ya pasó por ${station.nombre}. Se muestra su última posición conocida.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                )
-            } else {
-                val here = timeHere(result)
-                val clock = (here?.estimada ?: here?.programada)?.let { formatTime(it) }
-                val eta = if (atPlatform(result) && (result.arribo?.segundos ?: 0) <= 90) "en el andén"
-                else "en ${minutesLabel(result.arribo?.segundos).lowercase()}"
-                Text(
-                    "Llega a ${station.nombre} $eta" + if (clock != null) " · $clock" else "",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                val delay = delayMinutes(here)
-                if (delay != null && delay >= 2) {
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+        ) {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
+                    val where = when {
+                        line == null -> "Sin datos del recorrido de este tren"
+                        !line.started -> "Todavía no salió de ${line.nextName}"
+                        line.atStation && line.nextName == null -> "Llegó a ${line.prevName}"
+                        line.atStation -> "Detenido en ${line.prevName}"
+                        else -> "Entre ${line.prevName} y ${line.nextName}"
+                    }
+                    Text(where, style = MaterialTheme.typography.titleMedium)
+                    if (stale) {
+                        Text(
+                            "Ya pasó por ${station.nombre}. Se muestra su última posición conocida.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    } else {
+                        val here = timeHere(result)
+                        val clock = (here?.estimada ?: here?.programada)?.let { formatTime(it) }
+                        val eta = if (atPlatform(result) && (segundos ?: 0) <= 90) "en el andén"
+                        else "en ${minutesLabel(segundos).lowercase()}"
+                        Text(
+                            "Llega a ${station.nombre} $eta" + if (clock != null) " · $clock" else "",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        val delay = delayMinutes(here)
+                        if (delay != null && delay >= 2) {
+                            Text(
+                                "$delay min de demora",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    }
+                }
+
+                if (line != null) {
+                    TrainLineDiagram(line = line, highlightId = station.idEstacion, modifier = Modifier.fillMaxWidth())
                     Text(
-                        "$delay min de demora",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
+                        "Gris: estaciones por las que ya pasó, con hora real. Color: próximas, con hora estimada. " +
+                            if (line.usedGps) "Posición según el GPS del tren." else "Posición estimada por horario.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                    )
+                    Text(
+                        "Se actualiza cada ${ARRIVALS_POLL_MS / 1000} s o deslizá hacia abajo para actualizar ahora. " +
+                            "Deslizá la línea para ver todo el ramal.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 20.dp),
                     )
                 }
             }
-        }
-
-        if (line != null) {
-            TrainLineDiagram(line = line, highlightId = station.idEstacion, modifier = Modifier.fillMaxWidth())
-            Text(
-                "Gris: estaciones por las que ya pasó, con hora real. Color: próximas, con hora estimada. " +
-                    if (line.usedGps) "Posición según el GPS del tren." else "Posición estimada por horario.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-            )
-            Text(
-                "Se actualiza cada ${ARRIVALS_POLL_MS / 1000} s. Deslizá la línea para ver todo el ramal.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 20.dp),
-            )
         }
     }
 }
