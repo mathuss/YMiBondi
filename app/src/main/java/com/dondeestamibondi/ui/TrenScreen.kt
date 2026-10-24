@@ -1,5 +1,6 @@
 package com.dondeestamibondi.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,6 +63,9 @@ fun TrenScreen(modifier: Modifier = Modifier) {
             loadingStations = false
         }
     }
+
+    // Arrivals -> station list, instead of leaving the app.
+    BackHandler(enabled = selected != null) { selected = null }
 
     val current = selected
     if (current == null) {
@@ -130,6 +134,9 @@ private fun ArrivalsView(
     var error by remember { mutableStateOf<String?>(null) }
     // true = towards Tigre, false = towards Retiro
     var toTigre by remember { mutableStateOf(true) }
+
+    // Train detail -> arrivals list, instead of leaving the app.
+    BackHandler(enabled = selectedTrain != null) { selectedTrain = null }
 
     LaunchedEffect(station.idEstacion) {
         var firstLoad = true

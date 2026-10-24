@@ -2,6 +2,7 @@ package com.dondeestamibondi
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
@@ -44,6 +45,10 @@ private enum class Tab(val label: String) { BONDIS("Bondis"), TRENES("Trenes") }
 private fun AppScaffold() {
     var selected by rememberSaveable { mutableIntStateOf(0) }
     val tabs = remember { Tab.entries.toList() }
+
+    // Back from a non-default tab goes to the default tab instead of leaving the app;
+    // from the default tab it falls through to the system's normal exit behavior.
+    BackHandler(enabled = selected != 0) { selected = 0 }
 
     Scaffold(
         bottomBar = {

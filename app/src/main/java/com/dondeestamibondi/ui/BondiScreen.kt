@@ -1,5 +1,6 @@
 package com.dondeestamibondi.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.size
@@ -148,6 +149,24 @@ fun BondiScreen(modifier: Modifier = Modifier) {
         }
         keyboard?.hide()
     }
+
+    fun resetToSearch() {
+        line = ""
+        positions = emptyList()
+        routes = emptyList()
+        selectedRoute = null
+        sentidoFilter = null
+        stops = emptyList()
+        selectedBusId = null
+        clearTrail()
+        error = null
+        loading = false
+    }
+
+    // Back goes one step at a time instead of leaving the app: close the trail banner
+    // first (composed last below, so it wins while both are enabled), then the map.
+    BackHandler(enabled = line.isNotBlank()) { resetToSearch() }
+    BackHandler(enabled = trailBus != null) { clearTrail() }
 
     // Real line colors from the inventory (fallback when a vehicle has none).
     LaunchedEffect(Unit) {
