@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Y Mi Bondi? · Mockup de mejoras de UI</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230E5A8A'/%3E%3Crect x='16' y='16' width='32' height='28' rx='6' fill='none' stroke='%23fff' stroke-width='4'/%3E%3Ccircle cx='24' cy='48' r='4' fill='%23F2B84B'/%3E%3Ccircle cx='40' cy='48' r='4' fill='%23F2B84B'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ============ PAGE THEME ============ */
+  :root {
+    --bg: #eef2f6;
+    --surface: #ffffff;
+    --border: rgba(14, 40, 70, .12);
+    --text: #14202e;
+    --text-dim: #54657a;
+    --accent: #0E5A8A;
+    --gold: #a86f00;
+    --good: #1f7a3d;
+    --bad: #b3261e;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', Consolas, monospace;
+
+    /* Material3 tokens of the app (phone content) */
+    --m-bg: #FFFBFE; --m-surf: #FFFBFE; --m-on: #1C1B1F; --m-onvar: #49454F;
+    --m-outline: #79747E; --m-outvar: #CAC4D0; --m-primary: #0E5A8A; --m-onprimary: #fff;
+    --m-secc: #E8DEF8; --m-onsecc: #1D192B; --m-surfc: #F3EDF7; --m-surfch: #ECE6F0;
+    --m-err: #B3261E; --m-errc: #F9DEDC; --m-onerrc: #410E0B; --m-scrim: rgba(0,0,0,.32);
+    --m-warn: #8a5a00; --m-warnc: #FFE7B3; --m-ok: #1f7a3d; --m-okc: #D3EBD6;
+    --map-bg: #e9e6dc; --map-park: #cfe3c0; --map-water: #b9d6ea; --map-road: #ffffff; --map-road2: #f6efe0; --map-stop: #ffffff;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1722; --surface: #15222f; --border: rgba(255,255,255,.1);
+    --text: #e6edf5; --text-dim: #93a4b8; --accent: #59A5D8; --gold: #F2B84B; --good: #81C784; --bad: #F2B8B5;
+    --m-bg: #1C1B1F; --m-surf: #1C1B1F; --m-on: #E6E1E5; --m-onvar: #CAC4D0;
+    --m-outline: #938F99; --m-outvar: #49454F; --m-primary: #59A5D8; --m-onprimary: #00344f;
+    --m-secc: #4A4458; --m-onsecc: #E8DEF8; --m-surfc: #211F26; --m-surfch: #2B2930;
+    --m-err: #F2B8B5; --m-errc: #8C1D18; --m-onerrc: #F9DEDC; --m-scrim: rgba(0,0,0,.5);
+    --m-warn: #FFD27A; --m-warnc: #4d3700; --m-ok: #81C784; --m-okc: #1e4a2a;
+    --map-bg: #2a2f36; --map-park: #2c3a30; --map-water: #243a4d; --map-road: #3b424c; --map-road2: #343a43; --map-stop: #1C1B1F;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1722; --surface: #15222f; --border: rgba(255,255,255,.1);
+      --text: #e6edf5; --text-dim: #93a4b8; --accent: #59A5D8; --gold: #F2B84B; --good: #81C784; --bad: #F2B8B5;
+      --m-bg: #1C1B1F; --m-surf: #1C1B1F; --m-on: #E6E1E5; --m-onvar: #CAC4D0;
+      --m-outline: #938F99; --m-outvar: #49454F; --m-primary: #59A5D8; --m-onprimary: #00344f;
+      --m-secc: #4A4458; --m-onsecc: #E8DEF8; --m-surfc: #211F26; --m-surfch: #2B2930;
+      --m-err: #F2B8B5; --m-errc: #8C1D18; --m-onerrc: #F9DEDC; --m-scrim: rgba(0,0,0,.5);
+      --m-warn: #FFD27A; --m-warnc: #4d3700; --m-ok: #81C784; --m-okc: #1e4a2a;
+      --map-bg: #2a2f36; --map-park: #2c3a30; --map-water: #243a4d; --map-road: #3b424c; --map-road2: #343a43; --map-stop: #1C1B1F;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { font-size: 16px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); line-height: 1.55; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 2.5rem 1rem 5rem; }
+  header.top { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: flex-end; justify-content: space-between; margin-bottom: 2rem; }
+  header.top h1 { font-size: 2rem; line-height: 1.15; margin: 0 0 .5rem; text-wrap: balance; font-weight: 600; }
+  header.top p { margin: 0; max-width: 62ch; color: var(--text-dim); }
+  .eyebrow { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); margin-bottom: .5rem; }
+  .toggle { font: inherit; font-size: .9rem; padding: .55rem 1rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; }
+  .toggle:hover { border-color: var(--accent); }
+  .toggle:focus-visible, .phone button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  nav.toc { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 2.5rem; }
+  nav.toc a { font-size: .85rem; color: var(--text); text-decoration: none; border: 1px solid var(--border); background: var(--surface); padding: .35rem .7rem; border-radius: 6px; }
+  nav.toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+  section.pair { margin-bottom: 4rem; scroll-margin-top: 1rem; }
+  section.pair h2 { font-size: 1.4rem; margin: 0 0 .25rem; font-weight: 600; text-wrap: balance; }
+  section.pair .ref { font-family: var(--font-mono); font-size: .75rem; color: var(--text-dim); margin-bottom: 1.25rem; }
+  .row { display: flex; flex-wrap: wrap; gap: 2rem; align-items: flex-start; }
+  figure.fig { margin: 0; flex: 0 0 auto; }
+  figure.fig figcaption { font-size: .85rem; margin-top: .6rem; max-width: 360px; color: var(--text-dim); }
+  .tag { display: inline-block; font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; padding: .15rem .5rem; border-radius: 4px; margin-bottom: .5rem; }
+  .tag.before { background: rgba(179,38,30,.12); color: var(--bad); }
+  .tag.after { background: rgba(31,122,61,.14); color: var(--good); }
+  .notes { flex: 1 1 260px; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.1rem 1.25rem; }
+  .notes h3 { margin: 0 0 .6rem; font-size: .8rem; font-family: var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--accent); font-weight: 500; }
+  .notes ul { margin: 0; padding-left: 1.1rem; }
+  .notes li { margin-bottom: .55rem; font-size: .95rem; max-width: 62ch; overflow-wrap: break-word; }
+  .notes li:last-child { margin-bottom: 0; }
+  .notes code { font-family: var(--font-mono); font-size: .8rem; background: var(--bg); padding: .1rem .3rem; border-radius: 4px; }
+
+  /* ============ PHONE (1 css px = 1 dp, 360 x 740) ============ */
+  .phone { width: 360px; height: 740px; border-radius: 28px; border: 1px solid var(--border); background: var(--m-bg); color: var(--m-on);
+    font-family: Roboto, 'Segoe UI', sans-serif; font-size: 16px; line-height: 1.5; position: relative; overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 0 14px 40px rgba(10, 30, 55, .18); }
+  .phone.after { --m-secc: #D3E4F5; --m-onsecc: #0B2F4A; --m-surfc: #EAF1F8; --m-surfch: #E0EAF3; }
+  :root[data-theme="dark"] .phone.after { --m-secc: #2B4A63; --m-onsecc: #D3E4F5; --m-surfc: #1d2733; --m-surfch: #25313e; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .phone.after { --m-secc: #2B4A63; --m-onsecc: #D3E4F5; --m-surfc: #1d2733; --m-surfch: #25313e; } }
+  .phone svg.ic { width: 24px; height: 24px; fill: currentColor; flex: none; }
+  .phone svg.ic.s18 { width: 18px; height: 18px; }
+  .phone button { font: inherit; color: inherit; cursor: default; }
+  .sb { height: 28px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; font-size: 12px; font-weight: 500; }
+  .sb i { display: inline-block; width: 14px; height: 8px; border-radius: 2px; background: currentColor; opacity: .75; margin-left: 4px; }
+  .body { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+  .pad { padding: 0 12px; }
+  .navbar { height: 80px; flex: none; background: var(--m-surfc); display: flex; align-items: center; justify-content: space-around; padding-top: 4px; }
+  .navbar .it { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: var(--m-onvar); width: 120px; }
+  .navbar .it .pill { width: 64px; height: 32px; border-radius: 16px; display: grid; place-items: center; }
+  .navbar .it.on { color: var(--m-on); }
+  .navbar .it.on .pill { background: var(--m-secc); color: var(--m-onsecc); }
+
+  /* search row */
+  .searchrow { display: flex; align-items: center; gap: 8px; padding: 8px 12px 4px; }
+  .field { flex: 1; height: 56px; border: 1px solid var(--m-outline); border-radius: 4px; position: relative; display: flex; align-items: center; padding: 0 12px; gap: 12px; min-width: 0; }
+  .field.focus { border: 2px solid var(--m-primary); padding: 0 11px; }
+  .field .lbl { position: absolute; top: -9px; left: 10px; padding: 0 4px; background: var(--m-bg); font-size: 12px; color: var(--m-onvar); line-height: 1.3; }
+  .field.focus .lbl { color: var(--m-primary); }
+  .field .val { flex: 1; font-size: 16px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .field .ph { flex: 1; font-size: 16px; color: var(--m-onvar); opacity: .8; }
+  .field .clear { width: 40px; height: 40px; margin-right: -10px; display: grid; place-items: center; color: var(--m-onvar); }
+  .btn { height: 40px; padding: 0 24px; border-radius: 20px; background: var(--m-primary); color: var(--m-onprimary); border: 0; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+  .btn.tonal { background: var(--m-secc); color: var(--m-onsecc); }
+  .btn.ghost { background: transparent; color: var(--m-primary); padding: 0 12px; }
+  .btn.sm { height: 36px; padding: 0 16px; }
+
+  .searchrow.bottom { padding: 10px 12px 12px; border-top: 1px solid var(--m-outvar); background: var(--m-bg); }
+
+  /* near-me + ETA hero */
+  .nearbtn { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 0 16px; border-radius: 16px; border: 0; background: var(--m-secc); color: var(--m-onsecc); font-size: 15px; font-weight: 500; text-align: left; margin-bottom: 20px; }
+  .nearbtn small { display: block; font-weight: 400; font-size: 12px; opacity: .85; }
+  .nearbtn .t { flex: 1; line-height: 1.3; }
+  .etahero { display: flex; align-items: center; gap: 16px; padding: 12px 16px; margin-top: 12px; border-radius: 16px; background: var(--m-primary); color: var(--m-onprimary); }
+  .etahero .n { font-size: 44px; font-weight: 700; line-height: 1; display: flex; align-items: baseline; gap: 4px; }
+  .etahero .n small { font-size: 14px; font-weight: 500; }
+  .etahero .t b { display: block; font-size: 16px; font-weight: 500; line-height: 1.3; }
+  .etahero .t span { font-size: 12px; opacity: .9; }
+  .nearsheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--m-surfc); border-radius: 28px 28px 0 0; padding: 0 0 8px; box-shadow: 0 -2px 10px rgba(0,0,0,.18); }
+  .nearsheet .grab { width: 32px; height: 4px; border-radius: 2px; background: var(--m-outvar); margin: 12px auto 8px; }
+  .nearsheet h3 { margin: 0 20px 4px; font-size: 18px; font-weight: 500; }
+  .nrow { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 6px 20px; border-bottom: 1px solid var(--m-outvar); }
+  .nrow:last-child { border-bottom: 0; }
+  .nrow .d { width: 56px; flex: none; font-weight: 700; color: var(--m-primary); font-size: 16px; }
+  .nrow .t { flex: 1; min-width: 0; font-size: 15px; font-weight: 500; line-height: 1.3; }
+  .nrow .t small { display: block; font-weight: 400; font-size: 12px; color: var(--m-onvar); }
+  .nrow .ls { display: flex; gap: 4px; }
+  .nrow .ls span { min-width: 34px; height: 24px; border-radius: 6px; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--m-surfch); color: var(--m-on); padding: 0 6px; }
+  .nrow .ls span.mine { background: var(--m-primary); color: var(--m-onprimary); }
+  .empty3 { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 32px; gap: 8px; }
+  .empty3 .big { width: 72px; height: 72px; border-radius: 24px; background: var(--m-surfch); color: var(--m-onvar); display: grid; place-items: center; margin-bottom: 8px; }
+  .empty3 .big svg.ic { width: 36px; height: 36px; }
+  .empty3 h4 { margin: 0; font-size: 18px; font-weight: 500; }
+  .empty3 p { margin: 0 0 12px; font-size: 14px; color: var(--m-onvar); }
+
+  /* chips */
+  .chips { display: flex; gap: 8px; overflow: hidden; padding: 2px 12px; }
+  .chip { height: 32px; flex: none; border: 1px solid var(--m-outvar); border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 14px; font-weight: 500; color: var(--m-onvar); background: transparent; white-space: nowrap; }
+  .chip.sel { background: var(--m-secc); color: var(--m-onsecc); border-color: transparent; }
+  .chip.sel.pad8 { padding-left: 8px; }
+  .chip .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .chip.tall { height: 40px; border-radius: 20px; padding: 0 16px; }
+  .chip.tall.sel { padding-left: 12px; }
+  .status { font-size: 14px; color: var(--m-onvar); padding: 6px 12px; line-height: 1.45; }
+  .status.err { color: var(--m-err); }
+  .statusrow { display: flex; align-items: center; gap: 4px; padding: 0 4px 0 12px; min-height: 44px; }
+  .statusrow .tx { flex: 1; font-size: 14px; color: var(--m-onvar); line-height: 1.35; min-width: 0; }
+  .statusrow .tx b { color: var(--m-on); font-weight: 500; }
+  .iconbtn { width: 48px; height: 48px; border-radius: 24px; display: grid; place-items: center; flex: none; color: var(--m-onvar); background: transparent; border: 0; }
+  .iconbtn.fav { color: var(--m-primary); }
+  .live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--m-ok); margin-right: 6px; }
+
+  /* map */
+  .map { flex: 1; min-height: 0; position: relative; margin: 0; }
+  .map svg.mapsvg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .fab { position: absolute; right: 16px; bottom: 16px; width: 56px; height: 56px; border-radius: 16px; background: var(--m-secc); color: var(--m-onsecc); display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.28); }
+  .fab.sm { width: 48px; height: 48px; border-radius: 14px; }
+
+  /* empty state */
+  .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+  .empty h4 { margin: 0 0 8px; font-size: 16px; font-weight: 500; }
+  .empty p { margin: 0; font-size: 14px; color: var(--m-onvar); }
+  .empty2 { flex: 1; padding: 16px 12px; overflow: hidden; }
+  .empty2 .hero { display: flex; gap: 12px; align-items: center; padding: 16px; border-radius: 16px; background: var(--m-surfc); margin-bottom: 20px; }
+  .empty2 .hero .big { width: 48px; height: 48px; border-radius: 14px; background: var(--m-primary); color: var(--m-onprimary); display: grid; place-items: center; flex: none; }
+  .empty2 .hero h4 { margin: 0; font-size: 16px; font-weight: 500; }
+  .empty2 .hero p { margin: 2px 0 0; font-size: 13px; color: var(--m-onvar); line-height: 1.35; }
+  .sec { font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--m-onvar); display: flex; align-items: center; gap: 6px; margin: 0 0 8px 4px; }
+  .sec svg.ic { width: 16px; height: 16px; }
+  .wrapchips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .favcard { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 8px 0 12px; border-radius: 12px; background: var(--m-surfc); margin-bottom: 8px; }
+  .favcard .num { min-width: 44px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--m-primary); color: var(--m-onprimary); font-weight: 700; font-size: 15px; }
+  .favcard .t { flex: 1; font-size: 14px; line-height: 1.3; }
+  .favcard .t small { display: block; color: var(--m-onvar); font-size: 12px; }
+
+  /* markers on the map */
+  .bus { position: absolute; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 9px; border: 2px solid #fff; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+  .me { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #2a7de1; border: 3px solid #fff; box-shadow: 0 0 0 8px rgba(42,125,225,.25); transform: translate(-50%,-50%); }
+
+  /* banner */
+  .banner { margin: 4px 12px; border-radius: 12px; padding: 10px 6px 10px 14px; display: flex; align-items: center; gap: 10px; background: var(--m-errc); color: var(--m-onerrc); }
+  .banner .tx { flex: 1; font-size: 14px; line-height: 1.3; }
+  .banner .tx b { font-weight: 500; display: block; }
+  .banner.soft { background: var(--m-warnc); color: var(--m-warn); }
+
+  /* bottom sheet */
+  .scrim { position: absolute; inset: 0; background: var(--m-scrim); }
+  .sheet { overflow: hidden; position: absolute; left: 0; right: 0; bottom: 0; background: var(--m-surfc); border-radius: 28px 28px 0 0; padding: 0 20px 16px; display: flex; flex-direction: column; }
+  .sheet .grab { width: 32px; height: 4px; border-radius: 2px; background: var(--m-outvar); margin: 12px auto 14px; }
+  .sheet h3 { margin: 0; font-size: 22px; font-weight: 400; line-height: 1.25; }
+  .sheet .sub { font-size: 12px; color: var(--m-onvar); }
+  .sheet h5 { margin: 14px 0 2px; font-size: 16px; font-weight: 500; }
+  .sheet .small { font-size: 12px; color: var(--m-onvar); }
+  .sheet .ln { font-size: 14px; line-height: 1.5; }
+  .arow { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--m-outvar); }
+  .arow .d { width: 96px; flex: none; }
+  .arow .d b { display: block; color: var(--m-primary); font-weight: 700; }
+  .arow .d span { font-size: 12px; color: var(--m-onvar); }
+  .arow .r { flex: 1; font-size: 14px; }
+  .arow .r small { display: block; font-size: 12px; color: var(--m-onvar); }
+  .arow.tall { min-height: 56px; }
+  .arow .d.flex { width: auto; min-width: 88px; padding-right: 12px; }
+  .off { display: flex; align-items: center; gap: 12px; padding: 8px 0; min-height: 48px; border-bottom: 1px solid var(--m-outvar); }
+  .off .ln-chip { min-width: 44px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: 13px; background: var(--m-primary); color: var(--m-onprimary); }
+  .off .t { flex: 1; font-size: 14px; line-height: 1.3; }
+  .off .t small { display: block; color: var(--m-onvar); font-size: 12px; }
+  .off .eta { font-weight: 700; color: var(--m-primary); font-size: 16px; }
+  .sk { height: 12px; border-radius: 6px; background: var(--m-outvar); opacity: .5; }
+
+  /* trains */
+  .hdr { padding: 20px; border-bottom: 1px solid var(--m-outvar); }
+  .hdr h3 { margin: 0; font-size: 22px; font-weight: 400; line-height: 1.25; }
+  .hdr p { margin: 0; font-size: 14px; color: var(--m-onvar); }
+  .st { padding: 16px 20px; border-bottom: 1px solid var(--m-outvar); font-size: 16px; font-weight: 500; }
+  .st2 { display: flex; align-items: center; min-height: 56px; padding: 0 4px 0 20px; border-bottom: 1px solid var(--m-outvar); font-size: 16px; font-weight: 500; }
+  .st2 span { flex: 1; }
+  .st2 small { font-weight: 400; font-size: 12px; color: var(--m-onvar); margin-right: 4px; }
+  .tback { display: flex; align-items: center; padding-right: 12px; }
+  .tback .t { flex: 1; }
+  .tback h3 { margin: 0; font-size: 22px; font-weight: 400; line-height: 1.25; }
+  .tback p { margin: 0; font-size: 12px; color: var(--m-onvar); }
+  .tfilters { display: flex; align-items: center; gap: 8px; padding: 4px 16px; }
+  .tfilters .sp { flex: 1; }
+  .tfilters small { font-size: 12px; color: var(--m-onvar); }
+  .arr { display: flex; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--m-outvar); }
+  .arr .big { width: 96px; flex: none; }
+  .arr .big b { display: block; font-size: 22px; font-weight: 700; color: var(--m-primary); line-height: 1.25; }
+  .arr .big span { font-size: 12px; color: var(--m-onvar); }
+  .arr .big span.late { color: var(--m-err); }
+  .arr .info { flex: 1; margin-left: 12px; min-width: 0; }
+  .arr .info b { display: block; font-size: 16px; font-weight: 500; }
+  .arr .info span { font-size: 12px; color: var(--m-onvar); }
+  .arr.a2 { padding: 14px 16px 14px 20px; min-height: 72px; }
+  .arr.a2 .big { width: auto; min-width: 84px; }
+  .badge { white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 11px; font-size: 12px; font-weight: 500; }
+  .badge.late { background: var(--m-warnc); color: var(--m-warn); }
+  .badge.ok { background: var(--m-okc); color: var(--m-ok); }
+  .badge.sched { background: var(--m-surfch); color: var(--m-onvar); }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .fresh { display: flex; align-items: center; gap: 2px; font-size: 12px; color: var(--m-onvar); }
+  .fresh .iconbtn { width: 40px; height: 40px; margin-right: -8px; }
+</style>
+</head>
+<body>
+
+<!-- ============ SHARED SVG DEFS ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="map" viewBox="0 0 360 560" preserveAspectRatio="xMidYMid slice">
+    <rect width="360" height="560" fill="var(--map-bg)"/>
+    <rect x="-10" y="380" width="150" height="110" rx="6" fill="var(--map-park)"/>
+    <rect x="250" y="40" width="130" height="90" rx="6" fill="var(--map-park)"/>
+    <path d="M-10 520 L120 470 L220 520 L380 470 L380 570 L-10 570Z" fill="var(--map-water)"/>
+    <g stroke="var(--map-road)" stroke-width="9" fill="none" stroke-linecap="round">
+      <path d="M-10 90 H380"/><path d="M-10 210 H380"/><path d="M-10 330 H380"/><path d="M-10 440 H380"/>
+      <path d="M70 -10 V570"/><path d="M180 -10 V570"/><path d="M290 -10 V570"/>
+    </g>
+    <g stroke="var(--map-road2)" stroke-width="4" fill="none">
+      <path d="M-10 150 H380"/><path d="M-10 270 H380"/><path d="M-10 385 H380"/>
+      <path d="M125 -10 V570"/><path d="M235 -10 V570"/><path d="M340 -10 V570"/>
+    </g>
+    <path d="M70 540 V330 H180 V210 H290 V30" stroke="#E4572E" stroke-width="5" fill="none" stroke-linejoin="round" stroke-linecap="round" opacity=".95"/>
+    <g fill="var(--map-stop)" stroke="#E4572E" stroke-width="2.5">
+      <circle cx="70" cy="500" r="5"/><circle cx="70" cy="420" r="5"/><circle cx="70" cy="350" r="5"/>
+      <circle cx="115" cy="330" r="5"/><circle cx="180" cy="300" r="5"/><circle cx="180" cy="240" r="5"/>
+      <circle cx="225" cy="210" r="5"/><circle cx="290" cy="150" r="5"/><circle cx="290" cy="80" r="5"/>
+    </g>
+  </symbol>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Paso 0 · propuesta, sin tocar código</div>
+      <h1>Y Mi Bondi? — mockup de mejoras de UI</h1>
+      <p>Las pantallas reales de la app (Material3, mismos colores, textos y medidas en dp) contra lo que cambiaría con el plan. Cada teléfono es de 360 × 740 dp, a escala 1:1. Los datos son de ejemplo.</p>
+    </div>
+    <button class="toggle" id="themeBtn" type="button">Alternar claro / oscuro</button>
+  </header>
+
+  <nav class="toc" aria-label="Pantallas">
+    <a href="#vacio">1 · Bondis vacío</a>
+    <a href="#linea">2 · Bondis con línea</a>
+    <a href="#error">3 · Errores y reintento</a>
+    <a href="#parada">4 · Parada</a>
+    <a href="#trenes-lista">5 · Trenes: estaciones</a>
+    <a href="#trenes-arribos">6 · Trenes: arribos</a>
+    <a href="#cerca">7 · Paradas cerca mío</a>
+  </nav>
+
+  <!-- ====================== 1 ====================== -->
+  <section class="pair" id="vacio">
+    <h2>1 · Bondis, pantalla de inicio</h2>
+    <div class="ref">Plan #2, #3 · EmptyHint (BondiScreen.kt)</div>
+    <div class="row">
+      <figure class="fig">
+        <span class="tag before">Antes</span>
+        <div class="phone before">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="searchrow">
+              <div class="field"><span class="lbl">Línea de colectivo</span><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg><span class="ph">Ej: 60, 152, 29</span></div>
+              <button class="btn" type="button">Ver</button>
+            </div>
+            <div class="status">Buscá una línea para ver los colectivos en vivo</div>
+            <div class="empty">
+              <h4>Escribí el número de línea y tocá Ver.</h4>
+              <p>Activá "Paradas" y tocá una para ver los bondis en camino.</p>
+            </div>
+          </div>
+          <div class="navbar"><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Hoy: dos líneas de texto y nada tocable. Cada uso arranca de cero.</figcaption>
+      </figure>
+      <figure class="fig">
+        <span class="tag after">Después</span>
+        <div class="phone after">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="empty2">
+              <div class="hero"><div class="big"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div><div><h4>¿Qué bondi esperás?</h4><p>Escribí el número de línea, o elegí una de tus líneas.</p></div></div>
+              <button class="nearbtn" type="button"><svg class="ic" viewBox="0 0 24 24"><use href="#i-loc"/></svg><span class="t">Paradas cerca mío<small>Ver qué líneas pasan a pocas cuadras</small></span></button>
+              <div class="sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg>Favoritas</div>
+              <div class="favcard"><div class="num">60</div><div class="t">Línea 60<small>Última vez: ayer 18:40</small></div><button class="iconbtn fav" type="button" aria-label="Quitar de favoritas"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg></button></div>
+              <div class="favcard"><div class="num">152</div><div class="t">Línea 152<small>Última vez: lun 08:05</small></div><button class="iconbtn fav" type="button" aria-label="Quitar de favoritas"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg></button></div>
+              <div class="sec" style="margin-top:16px"><svg class="ic" viewBox="0 0 24 24"><use href="#i-history"/></svg>Recientes</div>
+              <div class="wrapchips"><span class="chip tall">29</span><span class="chip tall">34</span><span class="chip tall">60B</span><span class="chip tall">130</span></div>
+              <p style="font-size:13px;color:var(--m-onvar);margin:0 4px">Tip: activá <b>Paradas</b> y tocá una para ver los bondis en camino.</p>
+            </div>
+            <div class="searchrow bottom">
+              <div class="field focus"><span class="lbl">Línea de colectivo</span><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg><span class="ph">Ej: 60, 152, 29</span></div>
+              <button class="btn" type="button">Ver</button>
+            </div>
+          </div>
+          <div class="navbar"><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Favoritas, recientes y "Paradas cerca mío" a un toque. La búsqueda baja, al alcance del pulgar.</figcaption>
+      </figure>
+      <aside class="notes">
+        <h3>Qué cambia</h3>
+        <ul>
+          <li><b>Memoria de uso.</b> Se guardan las últimas líneas buscadas y las favoritas (hoy no se guarda nada, ni la última línea).</li>
+          <li><b>Estado vacío útil.</b> Ícono, texto corto y atajos tocables en vez de instrucciones.</li>
+          <li><b>Chips de 40 dp</b> en lugar de 32 dp para tocar con el pulgar.</li>
+          <li><b>Paradas cerca mío</b>: ver paradas y líneas cercanas sin saber qué línea buscar (sección 7).</li>
+          <li><b>Búsqueda abajo, a una mano.</b> El campo y "Ver" pasan arriba de la barra de navegación, donde llega el pulgar; arriba queda el contenido. Aplica a todas las pantallas de Bondis de este mockup.</li>
+          <li>Colores de contenedores teñidos con el azul de la marca (hoy los chips y la barra inferior salen violeta por defecto de Material3).</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ====================== 2 ====================== -->
+  <section class="pair" id="linea">
+    <h2>2 · Bondis con una línea cargada</h2>
+    <div class="ref">Plan #3, #6 · BondiScreen.kt:265-358</div>
+    <div class="row">
+      <figure class="fig">
+        <span class="tag before">Antes</span>
+        <div class="phone before">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="searchrow">
+              <div class="field"><span class="lbl">Línea de colectivo</span><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg><span class="val">60</span></div>
+              <button class="btn" type="button">Ver</button>
+            </div>
+            <div class="chips"><span class="chip sel pad8"><svg class="ic s18" viewBox="0 0 24 24"><use href="#i-check"/></svg>Paradas</span><span class="chip">→ Constitución · 8</span><span class="chip">→ Tigre · 6</span></div>
+            <div class="chips"><span class="chip"><span class="dot" style="background:#E4572E"></span>Ramal A</span><span class="chip"><span class="dot" style="background:#2A7DE1"></span>Ramal B</span><span class="chip"><span class="dot" style="background:#2E9E5B"></span>Ramal C</span></div>
+            <div class="status">Línea 60 · 14 colectivos en vivo</div>
+            <div class="map">
+              <svg class="mapsvg" aria-hidden="true"><use href="#map" width="100%" height="100%"/></svg>
+              <div class="bus" style="left:70px;top:150px;background:#E4572E">60</div>
+              <div class="bus" style="left:180px;top:60px;background:#E4572E">60</div>
+              <div class="bus" style="left:250px;top:105px;background:#2A7DE1">60</div>
+              <div class="fab"><svg class="ic" viewBox="0 0 24 24"><use href="#i-loc"/></svg></div>
+            </div>
+          </div>
+          <div class="navbar"><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Búsqueda + dos filas de chips + estado: ~170 dp antes de ver el mapa, y las filas se deslizan sin avisar que hay más.</figcaption>
+      </figure>
+      <figure class="fig">
+        <span class="tag after">Después</span>
+        <div class="phone after">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="statusrow">
+              <div class="tx"><span class="live"></span><b>Línea 60</b> · 14 en vivo · hace 4 s</div>
+              <button class="iconbtn fav" type="button" aria-label="Guardar como favorita"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg></button>
+            </div>
+            <div class="chips" style="padding-bottom:6px"><span class="chip tall sel"><svg class="ic s18" viewBox="0 0 24 24"><use href="#i-tune"/></svg>Filtros · 1</span><span class="chip tall sel"><svg class="ic s18" viewBox="0 0 24 24"><use href="#i-check"/></svg>Paradas</span><span class="chip tall">→ Tigre</span></div>
+            <div class="map">
+              <svg class="mapsvg" aria-hidden="true"><use href="#map" width="100%" height="100%"/></svg>
+              <div class="bus" style="left:70px;top:210px;background:#E4572E">60</div>
+              <div class="bus" style="left:180px;top:120px;background:#E4572E">60</div>
+              <div class="bus" style="left:250px;top:165px;background:#2A7DE1">60</div>
+              <div class="fab"><svg class="ic" viewBox="0 0 24 24"><use href="#i-loc"/></svg></div>
+            </div>
+            <div class="searchrow bottom">
+              <div class="field"><span class="lbl">Línea de colectivo</span><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg><span class="val">60</span><span class="clear"><svg class="ic" viewBox="0 0 24 24"><use href="#i-close"/></svg></span></div>
+              <button class="btn" type="button">Ver</button>
+            </div>
+          </div>
+          <div class="navbar"><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Sentido y ramales viven dentro de "Filtros" (hoja inferior). El mapa gana espacio, se ve cuándo se actualizó y la búsqueda queda abajo.</figcaption>
+      </figure>
+      <aside class="notes">
+        <h3>Qué cambia</h3>
+        <ul>
+          <li><b>Una sola fila</b> en lugar de dos: "Filtros · 1" abre una hoja con sentido y ramales (con la leyenda de color y la descripción del recorrido).</li>
+          <li><b>Botón de borrar</b> dentro del campo y estrella para guardar la línea como favorita.</li>
+          <li><b>Frescura de datos</b> ("hace 4 s"), como ya hacen los trenes; hoy en bondis no se sabe si el dato es viejo.</li>
+          <li>Área táctil de los chips: 40 dp de alto.</li>
+          <li>Los marcadores se actualizan sin recrear todo el mapa cada 10 s (no se ve en el mockup, pero evita el parpadeo).</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ====================== 3 ====================== -->
+  <section class="pair" id="error">
+    <h2>3 · Cuando falla la conexión</h2>
+    <div class="ref">Plan #1, #5 · BondiScreen.kt:218, TrenScreen.kt:72,135,201</div>
+    <div class="row">
+      <figure class="fig">
+        <span class="tag before">Antes</span>
+        <div class="phone before">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="searchrow">
+              <div class="field"><span class="lbl">Línea de colectivo</span><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg><span class="val">60</span></div>
+              <button class="btn" type="button">Ver</button>
+            </div>
+            <div class="chips"><span class="chip sel pad8"><svg class="ic s18" viewBox="0 0 24 24"><use href="#i-check"/></svg>Paradas</span><span class="chip">→ Constitución · 8</span><span class="chip">→ Tigre · 6</span></div>
+            <div class="status err">⚠ Unable to resolve host: No address associated with hostname</div>
+            <div class="map">
+              <svg class="mapsvg" aria-hidden="true"><use href="#map" width="100%" height="100%"/></svg>
+              <div class="bus" style="left:70px;top:130px;background:#E4572E">60</div>
+              <div class="bus" style="left:180px;top:50px;background:#E4572E">60</div>
+              <div class="fab"><svg class="ic" viewBox="0 0 24 24"><use href="#i-loc"/></svg></div>
+            </div>
+          </div>
+          <div class="navbar"><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Texto técnico en inglés, sin botón, y no dice de cuándo son los colectivos que quedaron en el mapa.</figcaption>
+      </figure>
+      <figure class="fig">
+        <span class="tag after">Después</span>
+        <div class="phone after">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="banner soft">
+              <svg class="ic" viewBox="0 0 24 24"><use href="#i-wifioff"/></svg>
+              <div class="tx"><b>Sin conexión</b>Mostrando posiciones de hace 40 s</div>
+              <button class="btn ghost" type="button" style="color:inherit;font-weight:700"><svg class="ic s18" viewBox="0 0 24 24"><use href="#i-refresh"/></svg>Reintentar</button>
+            </div>
+            <div class="chips" style="padding-top:6px"><span class="chip tall sel"><svg class="ic s18" viewBox="0 0 24 24"><use href="#i-tune"/></svg>Filtros · 1</span><span class="chip tall sel"><svg class="ic s18" viewBox="0 0 24 24"><use href="#i-check"/></svg>Paradas</span></div>
+            <div class="map" style="margin-top:6px">
+              <svg class="mapsvg" aria-hidden="true"><use href="#map" width="100%" height="100%"/></svg>
+              <div class="bus" style="left:70px;top:150px;background:#E4572E;opacity:.55">60</div>
+              <div class="bus" style="left:180px;top:70px;background:#E4572E;opacity:.55">60</div>
+              <div class="fab"><svg class="ic" viewBox="0 0 24 24"><use href="#i-loc"/></svg></div>
+            </div>
+            <div class="searchrow bottom">
+              <div class="field"><span class="lbl">Línea de colectivo</span><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg><span class="val">60</span><span class="clear"><svg class="ic" viewBox="0 0 24 24"><use href="#i-close"/></svg></span></div>
+              <button class="btn" type="button">Ver</button>
+            </div>
+          </div>
+          <div class="navbar"><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Mensaje en español, qué pasó, qué se ve y un botón. Los datos viejos quedan, atenuados.</figcaption>
+      </figure>
+      <aside class="notes">
+        <h3>Qué cambia</h3>
+        <ul>
+          <li><b>Mensajes propios</b>: "Sin conexión", "No pudimos actualizar", en lugar de <code>e.message</code>.</li>
+          <li><b>Botón Reintentar</b> en bondis y en trenes (trenes hoy no tiene ninguno; solo pull-to-refresh).</li>
+          <li><b>Se conservan los últimos datos</b> con su antigüedad; los marcadores viejos se atenúan.</li>
+          <li>El ícono va como ícono, no como "⚠" dentro del texto (TalkBack lo leía en voz alta).</li>
+          <li>Avisos tipo "Buscando tu ubicación…" y "permiso denegado" pasan de Toast a Snackbar, con "Abrir ajustes" si el permiso quedó bloqueado.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ====================== 4 ====================== -->
+  <section class="pair" id="parada">
+    <h2>4 · Hoja de una parada</h2>
+    <div class="ref">Plan #7 · StopSheet (BondiScreen.kt:503-569)</div>
+    <div class="row">
+      <figure class="fig">
+        <span class="tag before">Antes</span>
+        <div class="phone before">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="map" style="margin-top:0">
+              <svg class="mapsvg" aria-hidden="true"><use href="#map" width="100%" height="100%"/></svg>
+            </div>
+            <div class="scrim"></div>
+            <div class="sheet" style="padding-bottom:20px">
+              <div class="grab"></div>
+              <h3>Av. Maipú y Roca</h3>
+              <div class="sub">Parada 1432 · líneas: 60, 152, 29</div>
+              <h5 style="margin-top:12px">Arribos oficiales</h5>
+              <div class="ln">Línea 60 Ramal A · 4 min</div>
+              <div class="ln">Línea 60 Ramal B · 11 min</div>
+              <h5>Unidades de la línea 60 en camino</h5>
+              <div class="small" style="margin-bottom:6px">Estimado por posición en vivo (distancia directa)</div>
+              <div class="arow"><div class="d"><b>350 m</b><span>~2 min</span></div><div class="r">Ramal A<small>Interno 4521</small></div></div>
+              <div class="arow"><div class="d"><b>1.2 km</b><span>~4 min</span></div><div class="r">Ramal A<small>Interno 4377</small></div></div>
+              <div class="arow"><div class="d"><b>2.8 km</b><span>~9 min</span></div><div class="r">Ramal B<small>Interno 4410</small></div></div>
+              <div class="arow"><div class="d"><b>3.4 km</b><span>~11 min</span></div><div class="r">Ramal B<small>Interno 4102</small></div></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Los arribos oficiales aparecen de golpe y empujan todo; si fallan, no se avisa. Tapa casi todo el mapa.</figcaption>
+      </figure>
+      <figure class="fig">
+        <span class="tag after">Después</span>
+        <div class="phone after">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="map" style="margin-top:0">
+              <svg class="mapsvg" aria-hidden="true"><use href="#map" width="100%" height="100%"/></svg>
+            </div>
+            <div class="scrim"></div>
+            <div class="sheet" style="padding-bottom:20px;max-height:520px">
+              <div class="grab"></div>
+              <div style="display:flex;align-items:flex-start;gap:4px"><div style="flex:1"><h3>Av. Maipú y Roca</h3><div class="sub">Parada 1432 · líneas: 60, 152, 29</div></div><button class="iconbtn" type="button" aria-label="Cerrar" style="margin:-8px -12px 0 0"><svg class="ic" viewBox="0 0 24 24"><use href="#i-close"/></svg></button></div>
+              <div class="etahero"><div class="n">4<small>min</small></div><div class="t"><b>Tu 60 llega en 4 min</b><span>Ramal A · Interno 4521 · a 350 m</span></div></div>
+              <h5 style="margin-top:12px">Arribos oficiales</h5>
+              <div class="off"><span class="ln-chip">60</span><div class="t">Ramal A<small>Hacia Tigre</small></div><span class="eta">4 min</span></div>
+              <div class="off"><span class="ln-chip">60</span><div class="t">Ramal B<small>Hacia Tigre</small></div><span class="eta">11 min</span></div>
+              <div class="off" style="opacity:.9"><span class="ln-chip sk" style="width:44px;height:28px;border-radius:8px"></span><div class="t"><div class="sk" style="width:70%"></div><div class="sk" style="width:40%;margin-top:6px"></div></div><div class="sk" style="width:36px"></div></div>
+              <h5>Unidades de la línea 60 en camino</h5>
+              <div class="small" style="margin-bottom:2px">Estimado por posición en vivo</div>
+              <div class="arow tall"><div class="d flex"><b>350 m</b><span>~2 min</span></div><div class="r">Ramal A<small>Interno 4521</small></div></div>
+              <div class="arow tall"><div class="d flex"><b>1.2 km</b><span>~4 min</span></div><div class="r">Ramal A<small>Interno 4377</small></div></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>ETA destacado arriba, arribos con esqueleto de carga (sin saltos), contenido con scroll, botón de cerrar y altura limitada para ver el mapa.</figcaption>
+      </figure>
+      <aside class="notes">
+        <h3>Qué cambia</h3>
+        <ul>
+          <li><b>El ETA, primero y grande.</b> Lo único que importa ya está arriba: "Tu 60 llega en 4 min". El detalle queda debajo para quien lo quiera.</li>
+          <li><b>Carga sin saltos</b>: filas esqueleto mientras llegan los arribos oficiales; si fallan, un renglón "No pudimos traer los arribos oficiales · Reintentar" (hoy se traga el error).</li>
+          <li><b>Ahora es scrolleable</b>, para que 6 unidades más los arribos entren en pantallas chicas.</li>
+          <li>Anchos flexibles en lugar de 96 dp fijos: no se cortan con fuente grande.</li>
+          <li>El ETA oficial se destaca con la línea en una pastilla.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ====================== 5 ====================== -->
+  <section class="pair" id="trenes-lista">
+    <h2>5 · Trenes, elegir estación</h2>
+    <div class="ref">Plan #8 · StationList (TrenScreen.kt:110)</div>
+    <div class="row">
+      <figure class="fig">
+        <span class="tag before">Antes</span>
+        <div class="phone before">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="hdr"><h3>Mitre · Retiro – Tigre</h3><p>Elegí una estación</p></div>
+            <div class="st">Retiro</div><div class="st">Belgrano C</div><div class="st">Núñez</div><div class="st">Rivadavia</div>
+            <div class="st">Vicente López</div><div class="st">Olivos</div><div class="st">La Lucila</div><div class="st">Martínez</div>
+            <div class="st">Acassuso</div><div class="st">San Isidro</div><div class="st">Béccar</div>
+          </div>
+          <div class="navbar"><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>17 estaciones en una lista larga; hay que recorrer toda para encontrar la tuya, cada vez.</figcaption>
+      </figure>
+      <figure class="fig">
+        <span class="tag after">Después</span>
+        <div class="phone after">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="hdr" style="padding:16px 20px 8px;border:0"><h3>Mitre · Retiro – Tigre</h3><p>Elegí una estación</p></div>
+            <div class="searchrow" style="padding-top:12px">
+              <div class="field"><span class="lbl">Buscar estación</span><svg class="ic" viewBox="0 0 24 24"><use href="#i-search"/></svg><span class="ph">Ej: Olivos</span></div>
+            </div>
+            <div style="padding:8px 12px 0"><div class="sec"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg>Tus estaciones</div></div>
+            <div class="st2"><span>Olivos</span><small>a 600 m</small><button class="iconbtn fav" type="button" aria-label="Quitar de favoritas"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg></button></div>
+            <div class="st2"><span>Retiro</span><button class="iconbtn fav" type="button" aria-label="Quitar de favoritas"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg></button></div>
+            <div style="padding:14px 12px 0"><div class="sec">Todas</div></div>
+            <div class="st2"><span>Belgrano C</span><button class="iconbtn" type="button" aria-label="Marcar favorita"><svg class="ic" viewBox="0 0 24 24"><use href="#i-starline"/></svg></button></div>
+            <div class="st2"><span>Núñez</span><button class="iconbtn" type="button" aria-label="Marcar favorita"><svg class="ic" viewBox="0 0 24 24"><use href="#i-starline"/></svg></button></div>
+            <div class="st2"><span>Rivadavia</span><button class="iconbtn" type="button" aria-label="Marcar favorita"><svg class="ic" viewBox="0 0 24 24"><use href="#i-starline"/></svg></button></div>
+            <div class="st2"><span>Vicente López</span><button class="iconbtn" type="button" aria-label="Marcar favorita"><svg class="ic" viewBox="0 0 24 24"><use href="#i-starline"/></svg></button></div>
+          </div>
+          <div class="navbar"><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Buscador, estaciones favoritas arriba y la más cercana marcada (solo si el usuario dio permiso de ubicación).</figcaption>
+      </figure>
+      <aside class="notes">
+        <h3>Qué cambia</h3>
+        <ul>
+          <li><b>Buscador</b> que filtra mientras se escribe.</li>
+          <li><b>Favoritas</b> arriba, y la última estación abierta se recuerda (hoy se pierde al cerrar la app).</li>
+          <li><b>Distancia a la estación</b> cuando ya hay permiso de ubicación; no se pide permiso nuevo en esta pantalla.</li>
+          <li>Filas de 56 dp mínimo con la estrella como botón de 48 dp.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ====================== 6 ====================== -->
+  <section class="pair" id="trenes-arribos">
+    <h2>6 · Trenes, próximos arribos</h2>
+    <div class="ref">Plan #1, #8, #10 · ArrivalsView / ArrivalRow (TrenScreen.kt:240-420)</div>
+    <div class="row">
+      <figure class="fig">
+        <span class="tag before">Antes</span>
+        <div class="phone before">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="tback"><button class="iconbtn" type="button" aria-label="Volver" style="color:var(--m-on)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-back"/></svg></button><div class="t"><h3>Olivos</h3><p>Mitre · Retiro – Tigre</p></div></div>
+            <div class="tfilters"><span class="chip sel pad8"><svg class="ic s18" viewBox="0 0 24 24"><use href="#i-check"/></svg>A Tigre</span><span class="chip">A Retiro</span><span class="sp"></span><small>Actualizado hace 12s</small></div>
+            <div class="arr" style="margin-top:4px"><div class="big"><b>3 min</b><span class="late">14:32 (+4)</span></div><div class="info"><b>a Tigre</b><span>Andén 2 · 4 min de demora · en vivo</span></div></div>
+            <div class="arr"><div class="big"><b>17 min</b><span>14:46</span></div><div class="info"><b>a Tigre</b><span>programado</span></div></div>
+            <div class="arr"><div class="big"><b>24 min</b><span>14:53</span></div><div class="info"><b>a Tigre</b><span>Andén 2 · en vivo</span></div></div>
+            <div class="arr"><div class="big"><b>47 min</b><span>15:16</span></div><div class="info"><b>a Tigre</b><span>programado</span></div></div>
+          </div>
+          <div class="navbar"><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Datos clave (demora, en vivo/programado) en gris de 12 sp, mezclados en una sola línea.</figcaption>
+      </figure>
+      <figure class="fig">
+        <span class="tag after">Después</span>
+        <div class="phone after">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="tback"><button class="iconbtn" type="button" aria-label="Volver" style="color:var(--m-on)"><svg class="ic" viewBox="0 0 24 24"><use href="#i-back"/></svg></button><div class="t"><h3>Olivos</h3><p>Mitre · Retiro – Tigre</p></div><button class="iconbtn fav" type="button" aria-label="Quitar de favoritas"><svg class="ic" viewBox="0 0 24 24"><use href="#i-star"/></svg></button></div>
+            <div class="tfilters"><span class="chip tall sel"><svg class="ic s18" viewBox="0 0 24 24"><use href="#i-check"/></svg>A Tigre</span><span class="chip tall">A Retiro</span><span class="sp"></span><div class="fresh">hace 12 s<button class="iconbtn" type="button" aria-label="Actualizar"><svg class="ic" viewBox="0 0 24 24"><use href="#i-refresh"/></svg></button></div></div>
+            <div class="arr a2" style="margin-top:4px"><div class="big"><b>3 min</b><span>14:32</span></div><div class="info"><b>a Tigre · Andén 2</b><div class="badges"><span class="badge late">+4 min de demora</span><span class="badge ok"><span class="live" style="margin:0;width:6px;height:6px"></span>En vivo</span></div></div></div>
+            <div class="arr a2"><div class="big"><b>17 min</b><span>14:46</span></div><div class="info"><b>a Tigre</b><div class="badges"><span class="badge sched">Programado</span></div></div></div>
+            <div class="arr a2"><div class="big"><b>24 min</b><span>14:53</span></div><div class="info"><b>a Tigre · Andén 2</b><div class="badges"><span class="badge ok"><span class="live" style="margin:0;width:6px;height:6px"></span>En vivo</span></div></div></div>
+            <div class="arr a2"><div class="big"><b>47 min</b><span>15:16</span></div><div class="info"><b>a Tigre</b><div class="badges"><span class="badge sched">Programado</span></div></div></div>
+          </div>
+          <div class="navbar"><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>La demora y "en vivo" pasan a pastillas legibles; botón de actualizar visible, además de deslizar.</figcaption>
+      </figure>
+      <aside class="notes">
+        <h3>Qué cambia</h3>
+        <ul>
+          <li><b>Demora como pastilla</b> (ámbar + texto, no solo rojo) y estado "En vivo" / "Programado" con forma y color distintos.</li>
+          <li><b>Botón de actualizar</b> con la hora de la última actualización.</li>
+          <li><b>Texto con estilos del tema</b> en lugar de <code>22.sp</code> fijo; la columna de minutos se ajusta al contenido y no se corta con fuente grande.</li>
+          <li>Estrella para marcar la estación como favorita.</li>
+          <li>Si falla la carga: mismo mensaje y botón Reintentar que en bondis (sección 3).</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ====================== 7 ====================== -->
+  <section class="pair" id="cerca">
+    <h2>7 · Paradas cerca mío (nuevo)</h2>
+    <div class="ref">Plan #9 · usa el permiso de ubicación que ya pide el botón del mapa</div>
+    <div class="row">
+      <figure class="fig">
+        <span class="tag after">Con permiso</span>
+        <div class="phone after">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="map" style="margin-top:0">
+              <svg class="mapsvg" aria-hidden="true"><use href="#map" width="100%" height="100%"/></svg>
+              <div class="me" style="left:180px;top:205px"></div>
+              <div class="bus" style="left:115px;top:170px;background:var(--m-primary);width:34px;height:34px;border-radius:50%">1</div>
+              <div class="bus" style="left:250px;top:150px;background:var(--m-primary);width:34px;height:34px;border-radius:50%">2</div>
+              <div class="bus" style="left:92px;top:262px;background:var(--m-primary);width:34px;height:34px;border-radius:50%">3</div>
+            </div>
+            <div class="nearsheet">
+              <div class="grab"></div>
+              <h3>Paradas cerca tuyo</h3>
+              <div class="nrow"><span class="d">120 m</span><div class="t">Av. Maipú y Roca<small>Hacia Tigre</small></div><div class="ls"><span class="mine">60</span><span>152</span></div></div>
+              <div class="nrow"><span class="d">260 m</span><div class="t">Maipú y Corrientes<small>Hacia Constitución</small></div><div class="ls"><span>29</span><span class="mine">60</span></div></div>
+              <div class="nrow"><span class="d">410 m</span><div class="t">Roca y Libertad<small>Hacia Retiro</small></div><div class="ls"><span>34</span></div></div>
+            </div>
+          </div>
+          <div class="navbar"><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Las tres paradas más cercanas, con distancia y líneas (en azul, tus favoritas). Tocar una abre la hoja de parada (sección 4).</figcaption>
+      </figure>
+      <figure class="fig">
+        <span class="tag after">Sin permiso</span>
+        <div class="phone after">
+          <div class="sb"><span>9:41</span><span><i></i><i></i></span></div>
+          <div class="body">
+            <div class="empty3">
+              <div class="big"><svg class="ic" viewBox="0 0 24 24"><use href="#i-loc"/></svg></div>
+              <h4>Necesitamos tu ubicación</h4>
+              <p>Solo se usa mientras la app está abierta, para mostrarte las paradas más cercanas. No se guarda ni se envía.</p>
+              <button class="btn" type="button">Activar ubicación</button>
+              <button class="btn ghost" type="button">Buscar por línea</button>
+            </div>
+          </div>
+          <div class="navbar"><div class="it on"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-bus"/></svg></div>Bondis</div><div class="it"><div class="pill"><svg class="ic" viewBox="0 0 24 24"><use href="#i-train"/></svg></div>Trenes</div></div>
+        </div>
+        <figcaption>Si no hay permiso se explica para qué se usa y hay una salida clara. Si quedó bloqueado, el botón pasa a "Abrir ajustes".</figcaption>
+      </figure>
+      <aside class="notes">
+        <h3>Qué cambia</h3>
+        <ul>
+          <li><b>Función nueva</b>: responde "¿qué bondi me conviene desde acá?" sin conocer la línea de antemano.</li>
+          <li>Reutiliza la ubicación que ya usa el botón del mapa (<code>BondiScreen.kt:107-115</code>) y las paradas; si el API de paradas no permite consultar por zona, hay que confirmarlo antes de implementar.</li>
+          <li>El permiso se pide solo cuando el usuario toca "Paradas cerca mío", como hoy.</li>
+          <li>Las líneas favoritas se resaltan dentro de cada parada.</li>
+        </ul>
+      </aside>
+    </div>
+  </section>
+
+  <section class="pair">
+    <h2>Lo que este mockup no muestra</h2>
+    <div class="notes" style="max-width:720px">
+      <ul>
+        <li>Accesibilidad (TalkBack para el diagrama del tren, lista alternativa al mapa, tipografía al 200 %): no es visible en una captura, se prueba en el celular.</li>
+        <li>Conservar el estado al cambiar de pestaña, y Gradle/DataStore: cambios internos sin diferencia visual.</li>
+        <li>La hoja de "Filtros" (sentido y ramales) de la sección 2 no está dibujada; reutiliza los mismos chips de hoy, apilados en una hoja inferior.</li>
+        <li>El mapa es una ilustración; en la app es el mapa real (osmdroid).</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<!-- icon definitions -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <path id="i-search" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+    <path id="i-close" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+    <path id="i-back" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+    <path id="i-loc" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0013 3.06V1h-2v2.06A8.994 8.994 0 003.06 11H1v2h2.06A8.994 8.994 0 0011 20.94V23h2v-2.06A8.994 8.994 0 0020.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+    <path id="i-bus" d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
+    <path id="i-train" d="M12 2c-4 0-8 .5-8 4v9.5C4 17.43 5.57 19 7.5 19L6 20.5v.5h2.23l2-2H14l2 2h2v-.5L16.5 19c1.93 0 3.5-1.57 3.5-3.5V6c0-3.5-3.58-4-8-4zM7.5 17c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm3.5-6H6V6h5v5zm5.5 6c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6h-5V6h5v5z"/>
+    <path id="i-star" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+    <path id="i-starline" d="M22 9.24l-7.19-.62L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.63-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.04 4.38.38-3.32 2.88 1 4.28L12 15.4z"/>
+    <path id="i-history" d="M13 3a9 9 0 00-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0013 21a9 9 0 000-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+    <path id="i-refresh" d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+    <path id="i-wifioff" d="M22.99 9C19.15 5.16 13.8 3.76 8.84 4.78l2.52 2.52c3.47-.17 6.99 1.05 9.63 3.7l2-2zm-4 4a9.793 9.793 0 00-4.49-2.56l3.53 3.53.96-.97zM2 3.05L5.07 6.1C3.6 6.82 2.22 7.78 1 9l1.99 2c1.24-1.24 2.67-2.16 4.2-2.77l2.24 2.24A9.684 9.684 0 005 13v.01L6.99 15a7.042 7.042 0 014.92-2.06L18.98 20l1.27-1.26L3.29 1.79 2 3.05zM9 17l3 3 3-3a4.237 4.237 0 00-6 0z"/>
+    <path id="i-tune" d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/>
+    <path id="i-check" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+  </defs>
+</svg>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById('themeBtn');
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme') || (dark ? 'dark' : 'light');
+      var next = cur === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+    });
+  })();
+</script>
+</body>
+</html>
