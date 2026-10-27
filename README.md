@@ -163,10 +163,13 @@ app/src/main/java/com/dondeestamibondi/
     Net.kt                  OkHttp + firma X-Auth-* + resync de reloj
     Models.kt               Modelos kotlinx-serialization
     Repo.kt                 Llamadas suspend a los endpoints
+    ParadasStore.kt         Catálogo de paradas en disco (también para "Paradas cerca mío")
+    UserPrefs.kt            Favoritas, recientes y última estación (SharedPreferences)
   ui/
-    BondiScreen.kt          Buscador + mapa en vivo
+    BondiScreen.kt          Inicio (favoritas/recientes), paradas cercanas, mapa en vivo, filtros y hoja de parada
     BusMap.kt               MapView OSMDroid embebido en Compose
-    TrenScreen.kt           Estaciones + arribos por sentido
+    TrenScreen.kt           Estaciones (buscador, favoritas, cercanía) + arribos por sentido
+    UiUtils.kt              Errores legibles + "Reintentar", edad del dato, ubicación
     theme/Theme.kt          Tema Material3
 ```
 

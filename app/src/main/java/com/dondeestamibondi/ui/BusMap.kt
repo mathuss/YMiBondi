@@ -88,6 +88,12 @@ data class RouteLayer(
     val shortName: String = "",
 )
 
+/** Bus markers already on the map, by vehicle id, plus what the static overlays were built from. */
+private class BusLayer {
+    var staticKey: List<Any?>? = null
+    val markers = HashMap<String, Marker>()
+}
+
 /** A live bus plus the real color of its line, resolved by the caller. */
 data class BusPin(val bus: BusPosition, val colorHex: String)
 
@@ -104,6 +110,8 @@ fun BusMap(
     showMyLocation: Boolean = false,
     centerOnMeRequest: Int = 0,
     onNoFix: () -> Unit = {},
+    /** Draw the buses faded: what is shown is old data (the last poll failed). */
+    dimmed: Boolean = false,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -215,6 +223,7 @@ fun BusMap(
         }
     }
 
+    val layer = remember { BusLayer() }
     val lastFit = remember { arrayOf("") }
     val lastTrail = remember { arrayOf<List<GeoPoint>?>(null) }
 
@@ -282,33 +291,51 @@ fun BusMap(
             }
             copyright.setTextColor(Color.parseColor(if (dark) "#9E9E9E" else "#616161"))
 
-            map.overlays.clear()
-            // Draw order: tap catcher (bottom) -> routes -> stops -> buses -> attribution.
-            map.overlays.add(tapOverlay)
-            map.overlays.addAll(routeOverlays)
-            map.overlays.addAll(stopOverlays)
-            map.overlays.addAll(trailOverlays)
+            // Routes, stops and the trail only change with their own inputs; the buses change
+            // every poll. Rebuild everything only when the former change, otherwise just move
+            // the bus markers, so a poll doesn't tear the whole overlay list down.
+            val staticKey = listOf(routeOverlays, stopOverlays, trailOverlays, showMyLocation)
+            val rebuild = layer.staticKey != staticKey
+            if (rebuild) {
+                layer.staticKey = staticKey
+                layer.markers.clear()
+                map.overlays.clear()
+                // Draw order: tap catcher (bottom) -> routes -> stops -> trail -> buses -> attribution.
+                map.overlays.add(tapOverlay)
+                map.overlays.addAll(routeOverlays)
+                map.overlays.addAll(stopOverlays)
+                map.overlays.addAll(trailOverlays)
+                map.overlays.add(copyright)
+                // Added last so the user's own position draws above routes, stops and buses.
+                if (showMyLocation) map.overlays.add(myLocationOverlay)
+            }
 
             val busPoints = ArrayList<GeoPoint>(buses.size)
+            val seen = HashSet<String>()
             for ((p, colorHex) in buses) {
                 if (p.latitude == 0.0 && p.longitude == 0.0) continue
                 val gp = GeoPoint(p.latitude, p.longitude)
                 busPoints.add(gp)
-                val marker = Marker(map).apply {
-                    position = gp
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
-                    icon = busIcons.drawable(p, colorHex)
-                    infoWindow = null // our own sheet instead of OSMDroid's bubble
-                    setOnMarkerClickListener { _, _ ->
-                        onBusClickState.value(p)
-                        true
+                seen.add(p.id)
+                val marker = layer.markers.getOrPut(p.id) {
+                    Marker(map).apply {
+                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
+                        infoWindow = null // our own sheet instead of OSMDroid's bubble
+                        setOnMarkerClickListener { m, _ ->
+                            (m.relatedObject as? BusPosition)?.let { onBusClickState.value(it) }
+                            true
+                        }
+                        // Just under the attribution, above routes, stops and the trail.
+                        map.overlays.add(map.overlays.indexOf(copyright).coerceAtLeast(0), this)
                     }
                 }
-                map.overlays.add(marker)
+                marker.position = gp
+                marker.relatedObject = p
+                marker.icon = busIcons.drawable(p, colorHex)
+                marker.alpha = if (dimmed) 0.5f else 1f
             }
-            map.overlays.add(copyright)
-            // Added last so the user's own position draws above routes, stops and buses.
-            if (showMyLocation) map.overlays.add(myLocationOverlay)
+            val gone = layer.markers.keys.filter { it !in seen }
+            for (id in gone) layer.markers.remove(id)?.let { map.overlays.remove(it) }
 
             // Zoom to a freshly loaded trail once; don't fight the user afterwards.
             if (trail.size >= 2 && lastTrail[0] !== trail) {

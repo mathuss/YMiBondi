@@ -23,6 +23,7 @@ object LineColors {
 
     private val mutex = Mutex()
     @Volatile private var inventory: Map<String, String>? = null
+    @Volatile private var knownLines: Set<String>? = null
 
     /** Loads the inventory colors once per session; failures just skip that source. */
     suspend fun ensureInventory() {
@@ -30,12 +31,17 @@ object LineColors {
         mutex.withLock {
             if (inventory != null) return
             inventory = runCatching {
-                Repo.inventario()
+                val items = Repo.inventario()
+                knownLines = items.map { it.linea.trim().uppercase() }.toSet()
+                items
                     .mapNotNull { item -> normalize(item.color)?.let { item.linea.trim() to it } }
                     .toMap()
             }.getOrDefault(emptyMap())
         }
     }
+
+    /** Whether the inventory lists [linea]; null when the inventory could not be loaded. */
+    fun isKnownLine(linea: String): Boolean? = knownLines?.contains(linea.trim().uppercase())
 
     fun forLine(linea: String, vehicleColor: String? = null): String =
         normalize(vehicleColor)

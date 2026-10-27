@@ -25,6 +25,8 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -165,14 +167,27 @@ fun TrainLineDiagram(line: TrainOnLine, highlightId: String?, modifier: Modifier
     val measurer = rememberTextMeasurer()
     val trainIcon = rememberVectorPainter(Icons.Filled.Train)
     val density = LocalDensity.current
-    val spacing = 88.dp
+    // Labels are in sp but the canvas is in dp: grow the canvas with the system font size so
+    // large fonts don't clip or overlap (capped, the diagram scrolls sideways anyway).
+    val fontScale = density.fontScale.coerceIn(1f, 2f)
+    val spacing = 88.dp * fontScale.coerceAtMost(1.5f)
     val padStart = 40.dp
     val padEnd = 120.dp // room for the last rotated label
     val canvasWidth = padStart + padEnd + spacing * (line.nodes.size - 1)
     val scroll = rememberScrollState()
     val firstScroll = remember { booleanArrayOf(true) }
 
-    BoxWithConstraints(modifier) {
+    // The canvas has no text a screen reader can see: describe where the train is and what is ahead.
+    val description = remember(line) {
+        val upcoming = line.nodes.filter { !it.passed }.joinToString(", ") { it.name }
+        val where = when {
+            !line.started -> "El tren todavía no salió" + (line.nextName?.let { " de $it" } ?: "")
+            line.atStation -> "El tren está en ${line.prevName ?: "una estación"}"
+            else -> "El tren está entre ${line.prevName} y ${line.nextName}"
+        }
+        "Diagrama del ramal. $where." + if (upcoming.isNotEmpty()) " Estaciones que le faltan: $upcoming." else ""
+    }
+    BoxWithConstraints(modifier.semantics { contentDescription = description }) {
         val viewport = with(density) { maxWidth.toPx() }
         LaunchedEffect(line.position) {
             val trainX = with(density) { (padStart + spacing * line.position.toFloat()).toPx() }
@@ -183,8 +198,8 @@ fun TrainLineDiagram(line: TrainOnLine, highlightId: String?, modifier: Modifier
             }
         }
         Box(Modifier.horizontalScroll(scroll)) {
-            Canvas(Modifier.width(canvasWidth).height(196.dp)) {
-                val lineY = 124.dp.toPx()
+            Canvas(Modifier.width(canvasWidth).height(196.dp * fontScale)) {
+                val lineY = 124.dp.toPx() * fontScale
                 fun x(i: Double) = (padStart + spacing * i.toFloat()).toPx()
                 val first = x(0.0)
                 val last = x((line.nodes.size - 1).toDouble())
